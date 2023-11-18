@@ -1,0 +1,37 @@
+{
+  "name": "horizom/dto",
+  "description": "Data Transfer Objects for all PHP applications",
+  "type": "library",
+  "keywords": [
+    "dto",
+    "data transfer object"
+  ],
+  "license": "MIT",
+  "support": {
+    "issues": "https://github.com/horizom/dto/issues",
+    "source": "https://github.com/horizom/dto"
+  },
+  "authors": [
+    {
+      "name": "Roland Edi",
+      "email": "lambirou225@gmail.com"
+    }
+  ],
+  "require": {
+    "php": ">=7.0"
+  },
+  "require-dev": {
+    "symfony/var-dumper": "^6.3",
+    "nesbot/carbon": "^2.71"
+  },
+  "autoload": {
+    "psr-4": {
+      "Horizom\\DTO\\": "src/"
+    }
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}

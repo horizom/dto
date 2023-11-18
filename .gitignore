@@ -1,0 +1,12 @@
+.DS_Store
+.phpunit.result.cache
+.env
+.env.backup
+
+/.vscode
+/node_modules
+/vendor
+/tests
+
+npm-debug.log
+yarn-error.log
