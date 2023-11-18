@@ -16,6 +16,11 @@ abstract class DTO
     use DTOTransformerTrait;
 
     /**
+     * @var array<string, mixed>
+     */
+    private $original = [];
+
+    /**
      * @var Castable[]
      */
     private $castables = [
@@ -74,6 +79,8 @@ abstract class DTO
 
     public function fill(array $data)
     {
+        $this->original = $data;
+
         $this->fillStack($data);
         $this->fillStack($this->defaults(), true);
     }
@@ -95,6 +102,11 @@ abstract class DTO
         }
     }
 
+    /**
+     * Defining default values
+     *
+     * @return array<string, mixed>
+     */
     protected function defaults()
     {
         return [];
@@ -117,7 +129,9 @@ abstract class DTO
         $casts = $this->casts();
         $type = $casts[$key];
 
-        if (in_array($type, ['integer', 'double', 'boolean', 'string', 'array', 'object'])) {
+        if ($type instanceof Castable) {
+            $value = $type->cast($key, $value);
+        } elseif (in_array($type, ['integer', 'double', 'boolean', 'string', 'array', 'object'])) {
             $castable = $this->castables[$type];
             $value = (new $castable())->cast($key, $value);
         } elseif (class_exists($type) && !$value instanceof $type) {
@@ -128,6 +142,8 @@ abstract class DTO
             } else {
                 $value = new $type($value);
             }
+        } elseif (is_callable($type)) {
+            $value = $type($value);
         }
 
         return $value;

@@ -2,7 +2,6 @@
 
 namespace Horizom\DTO;
 
-
 trait DTOResolverTrait
 {
     public static function fromJson(string $json)

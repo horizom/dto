@@ -3,33 +3,54 @@
 namespace Horizom\DTO;
 
 use DateTimeInterface;
+use Horizom\DTO\Casting\CustomCast;
 
 trait DTOTransformerTrait
 {
     public function toArray(): array
     {
         $data = $this->buildDataForExport();
+        $result = [];
 
-        foreach ($data as $key => $value) {
-            if ($value instanceof DTO) {
-                $data[$key] = $value->toArray();
-            } elseif ($value instanceof DateTimeInterface) {
-                $data[$key] = $value->format('Y-m-d H:i:s');
-            } elseif (is_array($value)) {
-                $data[$key] = array_map(function ($i) {
-                    return $i instanceof DTO ? $i->toArray() : $i;
-                }, $value);
-            } elseif (is_object($value)) {
-                $data[$key] = (array) $value;
-            }
+        foreach ($data as $property => $value) {
+            $result[$property] = $this->uncast($property, $value);
         }
 
-        return $data;
+        return $result;
     }
 
     public function toJson(): string
     {
         return json_encode($this->toArray());
+    }
+
+    private function uncast(string $property, $value)
+    {
+        if ($this->{$property} === null) {
+            return $value;
+        }
+
+        $casts = $this->casts();
+
+        if (isset($casts[$property]) && $casts[$property] instanceof Cast) {
+            $result = $casts[$property]->uncast($property, $value);
+        } elseif (is_object($value)) {
+            if (method_exists($value, 'toArray')) {
+                $result = $value->toArray();
+            } else {
+                $result = (array) $value;
+            }
+        } elseif ($value instanceof DateTimeInterface) {
+            $result = $value->format('Y-m-d H:i:s');
+        } elseif (is_array($value)) {
+            $result = array_map(function ($k, $v) {
+                return $this->uncast($k, $v);
+            }, $value);
+        } else {
+            $result = $value;
+        }
+
+        return $result;
     }
 
     private function buildDataForExport()
@@ -62,9 +83,9 @@ trait DTOTransformerTrait
     {
         return in_array($property, [
             'data',
+            'original',
             'castables',
-            'validatedData',
-            'requireCasting',
+            'casts',
         ]);
     }
 }
