@@ -3,7 +3,6 @@
 namespace Horizom\DTO;
 
 use DateTimeInterface;
-use Horizom\DTO\Casting\CustomCast;
 
 trait DTOTransformerTrait
 {
@@ -63,29 +62,5 @@ trait DTOTransformerTrait
         }
 
         return $data;
-    }
-
-    private function getAcceptedProperties(): array
-    {
-        $acceptedKeys = [];
-        $vars = get_object_vars($this);
-
-        foreach ($vars as $key => $value) {
-            if (!$this->isforbiddenProperty($key)) {
-                $acceptedKeys[] = $key;
-            }
-        }
-
-        return $acceptedKeys;
-    }
-
-    private function isforbiddenProperty(string $property): bool
-    {
-        return in_array($property, [
-            'data',
-            'original',
-            'castables',
-            'casts',
-        ]);
     }
 }

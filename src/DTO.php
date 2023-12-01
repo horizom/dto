@@ -88,11 +88,14 @@ abstract class DTO
     private function fillStack(array $data, bool $isDefault = false)
     {
         $casts = $this->casts();
+        $acceptedKeys = $this->getAcceptedProperties();
 
-        foreach ($data as $key => $value) {
-            if ($isDefault && isset($this->{$key}) && $this->{$key} !== null) {
+        foreach ($acceptedKeys as $key) {
+            if ($isDefault && isset($this->{$key}) && $this->{$key} !== null || isset($data[$key]) === false) {
                 continue;
             }
+
+            $value = $data[$key];
 
             if (isset($casts[$key])) {
                 $value = $this->castValue($key, $value);
@@ -147,5 +150,29 @@ abstract class DTO
         }
 
         return $value;
+    }
+
+    private function getAcceptedProperties(): array
+    {
+        $acceptedKeys = [];
+        $vars = get_object_vars($this);
+
+        foreach ($vars as $key => $value) {
+            if (!$this->isforbiddenProperty($key)) {
+                $acceptedKeys[] = $key;
+            }
+        }
+
+        return $acceptedKeys;
+    }
+
+    private function isforbiddenProperty(string $property): bool
+    {
+        return in_array($property, [
+            'data',
+            'original',
+            'castables',
+            'casts',
+        ]);
     }
 }
