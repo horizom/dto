@@ -6,6 +6,11 @@ use DateTimeInterface;
 
 trait DTOTransformerTrait
 {
+    public function __toString()
+    {
+        return $this->toJson();
+    }
+
     public function toArray(): array
     {
         $data = $this->buildDataForExport();

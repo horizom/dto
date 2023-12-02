@@ -20,18 +20,6 @@ abstract class DTO
      */
     private $original = [];
 
-    /**
-     * @var Castable[]
-     */
-    private $castables = [
-        'string' => StringCast::class,
-        'integer' => IntegerCast::class,
-        'boolean' => BooleanCast::class,
-        'double' => FloatCast::class,
-        'object' => ObjectCast::class,
-        'array' => ArrayCast::class,
-    ];
-
     public function __construct(
         array $data = []
     ) {
@@ -58,9 +46,12 @@ abstract class DTO
         unset($this->{$name});
     }
 
-    public function __toString()
+    /**
+     * Returns the original data
+     */
+    public function getOriginal()
     {
-        return $this->toJson();
+        return $this->original;
     }
 
     public static function create(array $data = [])
@@ -135,7 +126,7 @@ abstract class DTO
         if ($type instanceof Castable) {
             $value = $type->cast($key, $value);
         } elseif (in_array($type, ['integer', 'double', 'boolean', 'string', 'array', 'object'])) {
-            $castable = $this->castables[$type];
+            $castable = $this->castables()[$type];
             $value = (new $castable())->cast($key, $value);
         } elseif (class_exists($type) && !$value instanceof $type) {
             if (property_exists($type, 'create')) {
@@ -174,5 +165,19 @@ abstract class DTO
             'castables',
             'casts',
         ]);
+    }
+
+    private function castables(string $type = null): array
+    {
+        $items = [
+            'string' => StringCast::class,
+            'integer' => IntegerCast::class,
+            'boolean' => BooleanCast::class,
+            'double' => FloatCast::class,
+            'object' => ObjectCast::class,
+            'array' => ArrayCast::class,
+        ];
+
+        return $type ? $items[$type] : $items;
     }
 }
