@@ -82,6 +82,46 @@ $dto->email; // 'john.doe@example.com'
 $dto->password; // 's3CreT!@1a2B'
 ```
 
+### Casting DTO Properties
+
+You can cast your `DTO` properties to some types:
+
+```php
+use Carbon\Carbon;
+use Horizom\DTO\DTO;
+use DateTimeImmutable;
+
+class UserDTO extends DTO
+{
+    public string $id;
+
+    public string $name;
+
+    public string $email;
+
+    public string $password;
+
+    public Carbon $created_at;
+
+    public DateTimeImmutable $updated_at;
+
+    public array $roles;
+
+    protected function casts()
+    {
+        return [
+            'id' => 'integer',
+            'name' => 'string',
+            'email' => 'string',
+            'password' => 'string',
+            'created_at' => Carbon::class,
+            'updated_at' => DateTimeImmutable::class,
+            'roles' => 'array',
+        ];
+    }
+}
+```
+
 ### Defining Default Values
 
 Sometimes we can have properties that are optional and that can have default values. You can define the default values for your `DTO` properties in the `defaults` function:
@@ -201,7 +241,7 @@ You can also create new Castable types for your project by using a callable/call
 ```php
 use Horizom\DTO\DTO;
 
-class CustomDTO extends ValidatedDTO
+class CustomDTO extends DTO
 {
     protected function casts(): array
     {
