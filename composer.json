@@ -14,13 +14,12 @@
   "authors": [
     {
       "name": "Roland Edi",
-      "email": "lambirou225@gmail.com"
+      "email": "rolandedi@codivoire.com"
     }
   ],
   "require": {
     "php": ">=7.0"
   },
-  "require-dev": {},
   "autoload": {
     "psr-4": {
       "Horizom\\DTO\\": "src/"
