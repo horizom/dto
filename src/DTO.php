@@ -5,12 +5,12 @@ namespace Horizom\DTO;
 use Horizom\DTO\Casting\ArrayCast;
 use Horizom\DTO\Casting\BooleanCast;
 use Horizom\DTO\Casting\DateTimeCast;
+use Horizom\DTO\Casting\EnumCast;
 use Horizom\DTO\Casting\FloatCast;
 use Horizom\DTO\Casting\IntegerCast;
 use Horizom\DTO\Casting\ObjectCast;
 use Horizom\DTO\Casting\StringCast;
 use Horizom\DTO\Contracts\CastableContract;
-use Horizom\DTO\Exceptions\CastException;
 use Horizom\DTO\Exceptions\CastTypeException;
 
 abstract class DTO
@@ -128,18 +128,11 @@ abstract class DTO
         $castables = $this->castables();
         $types = array_keys($castables);
 
-        if (in_array($type, $types)) {
-            $castable = $castables[$type];
-            $value = (new $castable())->cast($key, $value);
-        } elseif ($type instanceof CastableContract) {
+        if ($type instanceof CastableContract) {
             $value = $type->cast($key, $value);
         } elseif (is_string($type)) {
             if (function_exists('enum_exists') && enum_exists($type)) {
-                if ($type::tryFrom($value) === null) {
-                    throw new CastTypeException($type, $value);
-                }
-
-                $value = $type::from($value);
+                $value = (new EnumCast($type))->cast($key, $value);
             } elseif (class_exists($type)) {
                 if (property_exists($type, 'create')) {
                     $value = $type::create($value);
@@ -151,6 +144,11 @@ abstract class DTO
             }
         } elseif (is_callable($type)) {
             $value = $type($value);
+        } elseif (in_array($type, $types)) {
+            $castable = $castables[$type];
+            $value = (new $castable())->cast($key, $value);
+        } else {
+            throw new CastTypeException($key, $type);
         }
 
         return $value;

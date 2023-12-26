@@ -87,9 +87,12 @@ $dto->password; // 's3CreT!@1a2B'
 You can cast your `DTO` properties to some types:
 
 ```php
+use App\Enums\UserRole;
 use Carbon\Carbon;
 use Horizom\DTO\DTO;
 use DateTimeImmutable;
+use Horizom\DTO\Casting\ArrayCast;
+use Horizom\DTO\Casting\EnumCast;
 
 class UserDTO extends DTO
 {
@@ -116,7 +119,8 @@ class UserDTO extends DTO
             'password' => 'string',
             'created_at' => Carbon::class,
             'updated_at' => DateTimeImmutable::class,
-            'roles' => 'array',
+            'admin_role' => UserRole::class,
+            'roles' => new ArrayCast(new EnumCast(UserRole::class)),
         ];
     }
 }
@@ -193,7 +197,7 @@ $dto->toJson();
 
 #### Castable classes
 
-You can easily create new `Castable` types for your project by implementing the `Horizom\DTO\Casting\Castable` interface. This interface has a single method that must be implemented:
+You can easily create new `Castable` types for your project by implementing the `Horizom\DTO\Contracts\CastableContract` interface. This interface has a single method that must be implemented:
 
 ```php
 public function cast(string $property, mixed $value): mixed;
@@ -202,9 +206,9 @@ public function cast(string $property, mixed $value): mixed;
 Let's say that you have a `URLWrapper` class in your project, and you want that when passing a URL into your `DTO` it will always return a `URLWrapper` instance instead of a simple string:
 
 ```php
-use Horizom\DTO\Casting\Castable;
+use Horizom\DTO\Contracts\CastableContract;
 
-class URLCast implements Castable
+class URLCast implements CastableContract
 {
     public function cast(string $property, mixed $value): URLWrapper
     {
