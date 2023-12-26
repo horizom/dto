@@ -2,12 +2,15 @@
 
 namespace Horizom\DTO\Casting;
 
-final class ArrayCast implements Castable
+use Horizom\DTO\Contracts\CastableContract;
+use Horizom\DTO\Contracts\UnCastableContract;
+
+final class ArrayCast implements CastableContract, UnCastableContract
 {
-    /** @var Castable */
+    /** @var CastableContract */
     private $type;
 
-    public function __construct(Castable $type = null)
+    public function __construct(CastableContract $type = null)
     {
         $this->type = $type;
     }
@@ -21,8 +24,23 @@ final class ArrayCast implements Castable
 
         $result = is_array($value) ? $value : [$value];
 
-        return blank($this->type) ? $result : array_map(function ($item) use ($property) {
-            return $this->cast($property, $item);
+        if (is_null($this->type)) {
+            return $result;
+        }
+
+        return array_map(function ($item) use ($property) {
+            return $this->type->cast($property, $item);
         }, $result);
+    }
+
+    public function uncast(string $property, $value)
+    {
+        if (is_array($value)) {
+            return array_map(function ($item) use ($property) {
+                return $this->type->uncast($property, $item);
+            }, $value);
+        }
+
+        return $value;
     }
 }

@@ -4,11 +4,14 @@ namespace Horizom\DTO;
 
 use Horizom\DTO\Casting\ArrayCast;
 use Horizom\DTO\Casting\BooleanCast;
-use Horizom\DTO\Casting\Castable;
+use Horizom\DTO\Casting\DateTimeCast;
 use Horizom\DTO\Casting\FloatCast;
 use Horizom\DTO\Casting\IntegerCast;
 use Horizom\DTO\Casting\ObjectCast;
 use Horizom\DTO\Casting\StringCast;
+use Horizom\DTO\Contracts\CastableContract;
+use Horizom\DTO\Exceptions\CastException;
+use Horizom\DTO\Exceptions\CastTypeException;
 
 abstract class DTO
 {
@@ -122,19 +125,29 @@ abstract class DTO
     {
         $casts = $this->casts();
         $type = $casts[$key];
+        $castables = $this->castables();
+        $types = array_keys($castables);
 
-        if ($type instanceof Castable) {
-            $value = $type->cast($key, $value);
-        } elseif (in_array($type, ['integer', 'double', 'boolean', 'string', 'array', 'object'])) {
-            $castable = $this->castables()[$type];
+        if (in_array($type, $types)) {
+            $castable = $castables[$type];
             $value = (new $castable())->cast($key, $value);
-        } elseif (class_exists($type) && !$value instanceof $type) {
-            if (property_exists($type, 'create')) {
-                $value = $type::create($value);
-            } elseif (property_exists($type, 'make')) {
-                $value = $type::make($value);
-            } else {
-                $value = new $type($value);
+        } elseif ($type instanceof CastableContract) {
+            $value = $type->cast($key, $value);
+        } elseif (is_string($type)) {
+            if (function_exists('enum_exists') && enum_exists($type)) {
+                if ($type::tryFrom($value) === null) {
+                    throw new CastTypeException($type, $value);
+                }
+
+                $value = $type::from($value);
+            } elseif (class_exists($type)) {
+                if (property_exists($type, 'create')) {
+                    $value = $type::create($value);
+                } elseif (property_exists($type, 'make')) {
+                    $value = $type::make($value);
+                } else {
+                    $value = new $type($value);
+                }
             }
         } elseif (is_callable($type)) {
             $value = $type($value);
@@ -176,6 +189,7 @@ abstract class DTO
             'double' => FloatCast::class,
             'object' => ObjectCast::class,
             'array' => ArrayCast::class,
+            'datetime' => DateTimeCast::class,
         ];
 
         return $type ? $items[$type] : $items;

@@ -2,7 +2,10 @@
 
 namespace Horizom\DTO;
 
+use BackedEnum;
 use DateTimeInterface;
+use Horizom\DTO\Contracts\UnCastableContract;
+use UnitEnum;
 
 trait DTOTransformerTrait
 {
@@ -35,17 +38,20 @@ trait DTOTransformerTrait
         }
 
         $casts = $this->casts();
+        $cast = $casts[$property];
 
-        if (isset($casts[$property]) && $casts[$property] instanceof Cast) {
-            $result = $casts[$property]->uncast($property, $value);
+        if (isset($cast) && $cast instanceof UnCastableContract) {
+            $result = $cast->uncast($property, $value);
+        } elseif ($value instanceof BackedEnum || $value instanceof UnitEnum) {
+            $result = $value->value;
+        } elseif ($value instanceof DateTimeInterface) {
+            $result = $value->format('Y-m-d H:i:s');
         } elseif (is_object($value)) {
             if (method_exists($value, 'toArray')) {
                 $result = $value->toArray();
             } else {
                 $result = (array) $value;
             }
-        } elseif ($value instanceof DateTimeInterface) {
-            $result = $value->format('Y-m-d H:i:s');
         } elseif (is_array($value)) {
             $result = array_map(function ($k, $v) {
                 return $this->uncast($k, $v);

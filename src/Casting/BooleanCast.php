@@ -2,7 +2,9 @@
 
 namespace Horizom\DTO\Casting;
 
-final class BooleanCast implements Castable
+use Horizom\DTO\Contracts\CastableContract;
+
+final class BooleanCast implements CastableContract
 {
     public function cast(string $property, $value)
     {

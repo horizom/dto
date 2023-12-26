@@ -3,8 +3,9 @@
 namespace Horizom\DTO\Casting;
 
 use Closure;
+use Horizom\DTO\Contracts\CastableContract;
 
-final class Cast implements Castable
+final class Cast implements CastableContract
 {
     /** @var Closure */
     private $cast;

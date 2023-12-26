@@ -2,16 +2,17 @@
 
 namespace Horizom\DTO\Casting;
 
-use Horizom\DTO\DTOCastException;
+use Horizom\DTO\Contracts\CastableContract;
+use Horizom\DTO\Exceptions\CastException;
 
-final class StringCast implements Castable
+final class StringCast implements CastableContract
 {
     public function cast(string $property, $value)
     {
         try {
             return (string) $value;
         } catch (\Throwable) {
-            throw new DTOCastException($property);
+            throw new CastException($property);
         }
     }
 }

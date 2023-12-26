@@ -2,14 +2,15 @@
 
 namespace Horizom\DTO\Casting;
 
-use Horizom\DTO\DTOCastException;
+use Horizom\DTO\Contracts\CastableContract;
+use Horizom\DTO\Exceptions\CastException;
 
-final class IntegerCast implements Castable
+final class IntegerCast implements CastableContract
 {
     public function cast(string $property, $value)
     {
         if (!is_numeric($value)) {
-            throw new DTOCastException($property);
+            throw new CastException($property);
         }
 
         return (int) $value;

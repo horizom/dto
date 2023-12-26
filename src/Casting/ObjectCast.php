@@ -2,9 +2,11 @@
 
 namespace Horizom\DTO\Casting;
 
-use Horizom\DTO\DTOCastException;
+use Horizom\DTO\Contracts\CastableContract;
+use Horizom\DTO\Contracts\UnCastableContract;
+use Horizom\DTO\Exceptions\CastException;
 
-final class ObjectCast implements Castable
+final class ObjectCast implements CastableContract, UnCastableContract
 {
     public function cast(string $property, $value)
     {
@@ -13,9 +15,20 @@ final class ObjectCast implements Castable
         }
 
         if (!is_array($value)) {
-            throw new DTOCastException($property);
+            throw new CastException($property);
         }
 
         return (object) $value;
+    }
+
+    public function uncast(string $property, $value)
+    {
+        if (method_exists($value, 'toArray')) {
+            $result = $value->toArray();
+        } else {
+            $result = (array) $value;
+        }
+
+        return $result;
     }
 }

@@ -1,8 +1,8 @@
 <?php
 
-namespace Horizom\DTO;
+namespace Horizom\DTO\Exceptions;
 
-class DTOCastException extends \Exception
+class CastException extends \Exception
 {
     public function __construct(string $property)
     {
