@@ -8,6 +8,10 @@ final class BooleanCast implements CastableContract
 {
     public function cast(string $property, $value)
     {
+        if (is_bool($value)) {
+            return $value;
+        }
+
         if (is_numeric($value)) {
             return $value > 0;
         }
@@ -17,5 +21,10 @@ final class BooleanCast implements CastableContract
         }
 
         return (bool) $value;
+    }
+
+    public function uncast(string $property, $value)
+    {
+        return $value;
     }
 }

@@ -31,7 +31,7 @@ trait DTOTransformerTrait
         return json_encode($this->toArray());
     }
 
-    private function uncast(string $property, $value)
+    protected function uncast(string $property, $value)
     {
         if ($this->{$property} === null) {
             return $value;
@@ -40,14 +40,18 @@ trait DTOTransformerTrait
         $casts = $this->casts();
         $cast = $casts[$property];
 
-        if (isset($cast) && $cast instanceof UnCastableContract) {
+        if ($value instanceof DTO) {
+            $result = $value->toArray();
+        } elseif (isset($cast) && $cast instanceof UnCastableContract) {
             $result = $cast->uncast($property, $value);
         } elseif ($value instanceof BackedEnum || $value instanceof UnitEnum) {
             $result = $value->value;
         } elseif ($value instanceof DateTimeInterface) {
             $result = $value->format('Y-m-d H:i:s');
         } elseif (is_object($value)) {
-            if (method_exists($value, 'toArray')) {
+            if (method_exists($value, '__toString')) {
+                $result = (string) $value;
+            } elseif (method_exists($value, 'toArray')) {
                 $result = $value->toArray();
             } else {
                 $result = (array) $value;

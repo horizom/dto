@@ -23,9 +23,8 @@ abstract class DTO
      */
     private $original = [];
 
-    public function __construct(
-        array $data = []
-    ) {
+    public function __construct(array $data = [])
+    {
         $this->fill($data);
     }
 
@@ -95,7 +94,7 @@ abstract class DTO
                 $value = $this->castValue($key, $value);
             }
 
-            $this->{$key} = $this->getValue($value);
+            $this->{$key} = $value;
         }
     }
 
@@ -116,11 +115,6 @@ abstract class DTO
      */
     abstract protected function casts();
 
-    private function getValue($value)
-    {
-        return $value ? $value : null;
-    }
-
     private function castValue(string $key, $value)
     {
         $casts = $this->casts();
@@ -130,23 +124,23 @@ abstract class DTO
 
         if ($type instanceof CastableContract) {
             $value = $type->cast($key, $value);
+        } elseif (is_callable($type)) {
+            $value = $type($value);
         } elseif (is_string($type)) {
-            if (function_exists('enum_exists') && enum_exists($type)) {
+            if (in_array($type, $types)) {
+                $castable = $castables[$type];
+                $value = (new $castable())->cast($key, $value);
+            } elseif (function_exists('enum_exists') && enum_exists($type)) {
                 $value = (new EnumCast($type))->cast($key, $value);
             } elseif (class_exists($type)) {
                 if (property_exists($type, 'create')) {
-                    $value = $type::create($value);
+                    $value = $value ? $type::create($value) : null;
                 } elseif (property_exists($type, 'make')) {
-                    $value = $type::make($value);
+                    $value = $value ? $type::make($value) : null;
                 } else {
                     $value = new $type($value);
                 }
             }
-        } elseif (is_callable($type)) {
-            $value = $type($value);
-        } elseif (in_array($type, $types)) {
-            $castable = $castables[$type];
-            $value = (new $castable())->cast($key, $value);
         } else {
             throw new CastTypeException($key, $type);
         }
