@@ -185,6 +185,8 @@ abstract class DTO
         if (is_null($type)) {
             $casts = $this->casts();
             $type = $casts[$property] ?? null;
+        } elseif (!$type instanceof Cast) {
+            throw new \Exception("Invalid castable instance for property '{$property}'");
         }
 
         return $type;
