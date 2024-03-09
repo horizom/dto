@@ -4,8 +4,9 @@ namespace Horizom\DTO\Casting;
 
 use Closure;
 use Horizom\DTO\Contracts\CastableContract;
+use Horizom\DTO\Contracts\UnCastableContract;
 
-final class Cast implements CastableContract
+final class Cast implements CastableContract, UnCastableContract
 {
     /** @var Closure */
     private $cast;
@@ -36,11 +37,11 @@ final class Cast implements CastableContract
 
     public function cast(string $property, $value)
     {
-        return ($this->cast)($property, $value);
+        return($this->cast)($property, $value);
     }
 
     public function uncast(string $property, $value)
     {
-        return ($this->uncast)($property, $value);
+        return($this->uncast)($property, $value);
     }
 }
