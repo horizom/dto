@@ -1,8 +1,8 @@
-
 <div align="center">
 <h1>Horizom DTO</h1>
 
 Data Transfer Objects for all PHP applications.
+
 </div>
 
 <p align="center">
@@ -159,11 +159,34 @@ $dto = new UserDTO([
 $dto->username; // 'john_doe'
 ```
 
+### Built-in Cast Types
+
+The following type alias strings are available out of the box in `casts()`:
+
+| Alias        | Class          | Description                                                      |
+| ------------ | -------------- | ---------------------------------------------------------------- |
+| `'string'`   | `StringCast`   | Casts to `string` via `(string)`                                 |
+| `'integer'`  | `IntegerCast`  | Casts to `int`; throws on non-numeric input                      |
+| `'boolean'`  | `BooleanCast`  | Casts to `bool`; handles `'true'`, `'yes'`, `'1'`, etc.          |
+| `'double'`   | `FloatCast`    | Casts to `float`; throws on non-numeric input                    |
+| `'array'`    | `ArrayCast`    | Casts to `array`; accepts JSON strings                           |
+| `'object'`   | `ObjectCast`   | Casts to `stdClass`; accepts JSON strings or arrays              |
+| `'datetime'` | `DateTimeCast` | Casts to `DateTimeImmutable` (default format `Y-m-d H:i:s`, UTC) |
+
+For custom formats or timezones, instantiate `DateTimeCast` directly:
+
+```php
+'published_at' => new DateTimeCast('d/m/Y', 'Europe/Paris'),
+```
+
 ### Transforming DTO Data
 
 You can convert your DTO to some formats:
 
 #### To array
+
+Cast property values are automatically reversed (uncasted) to scalars:
+enums → their backing value, `DateTimeInterface` → formatted string, nested DTOs → recursive array.
 
 ```php
 $dto = new UserDTO([
@@ -183,14 +206,32 @@ $dto->toArray();
 #### To JSON string
 
 ```php
-$dto = new UserDTO([
-    'name' => 'John Doe',
-    'email' => 'john.doe@example.com',
-    'password' => 's3CreT!@1a2B',
-]);
-
 $dto->toJson();
 // '{"name":"John Doe","email":"john.doe@example.com","password":"s3CreT!@1a2B"}'
+```
+
+DTOs can also be cast directly to string — `(string) $dto` calls `toJson()` automatically.
+
+### Inspecting DTO State
+
+#### Check if any data is present
+
+```php
+$dto->filled(); // true if at least one property is non-null
+```
+
+#### Access original raw input
+
+```php
+$dto->getOriginal();
+// Returns the unmodified array originally passed to the constructor or fill()
+```
+
+#### Re-hydrate an existing instance
+
+```php
+$dto->fill(['name' => 'Jane Doe', 'email' => 'jane@example.com']);
+// Re-populates the DTO, re-applies casts and defaults
 ```
 
 ### Create Your Own Type Cast

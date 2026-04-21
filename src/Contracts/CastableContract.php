@@ -9,12 +9,13 @@ use Horizom\DTO\Exceptions\CastException;
 interface CastableContract
 {
     /**
-     * Cast value
+     * Casts a raw input value to the desired type for the given DTO property.
      *
-     * @param string $format
-     * @param string $timezone
-     * @throws CastException
-     * @return mixed
+     * @param  string $property The DTO property name being cast
+     * @param  mixed  $value    The raw input value to cast
+     * @return mixed            The cast value
+     *
+     * @throws CastException If the value cannot be cast to the expected type
      */
-    public function cast(string $property, $value);
+    public function cast(string $property, mixed $value): mixed;
 }

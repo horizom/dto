@@ -6,9 +6,23 @@ namespace Horizom\DTO\Casting;
 
 use Horizom\DTO\Contracts\CastableContract;
 
+/**
+ * Casts a value to a native PHP boolean.
+ *
+ * Conversion rules:
+ * - `bool`    → returned as-is
+ * - `numeric` → `true` if > 0, `false` otherwise
+ * - `string`  → parsed via `filter_var(..., FILTER_VALIDATE_BOOLEAN)` (handles `'true'`, `'yes'`, `'1'`, etc.)
+ * - other     → cast with `(bool)`
+ *
+ * Built-in alias: `'boolean'`
+ */
 final class BooleanCast implements CastableContract
 {
-    public function cast(string $property, $value)
+    /**
+     * {@inheritdoc}
+     */
+    public function cast(string $property, mixed $value): bool
     {
         if (is_bool($value)) {
             return $value;
@@ -25,7 +39,7 @@ final class BooleanCast implements CastableContract
         return (bool) $value;
     }
 
-    public function uncast(string $property, $value)
+    public function uncast(string $property, mixed $value): mixed
     {
         return $value;
     }

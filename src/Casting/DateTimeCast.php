@@ -14,26 +14,27 @@ use Horizom\DTO\Exceptions\CastException;
 final class DateTimeCast implements CastableContract, UnCastableContract
 {
     /**
-     * @var string
+     * @param string $format   PHP date format string used to parse/format the value (default: `'Y-m-d H:i:s'`)
+     * @param string $timezone IANA timezone identifier (default: `'UTC'`)
+     *
+     * @example new DateTimeCast('d/m/Y', 'Europe/Paris')
      */
-    private $format;
+    public function __construct(
+        private readonly string $format = 'Y-m-d H:i:s',
+        private readonly string $timezone = 'UTC',
+    ) {}
 
     /**
-     * @var string
+     * {@inheritdoc}
+     *
+     * Accepted input:
+     * - `DateTimeInterface` instance → returned as-is
+     * - `string` → parsed with `DateTimeImmutable::createFromFormat()` using `$this->format`
+     * - `int`    → treated as a Unix timestamp
+     *
+     * @throws CastException If the value cannot be interpreted as a date/time
      */
-    private $timezone;
-
-    /**
-     * @param string $format
-     * @param string $timezone
-     */
-    public function __construct(string $format = 'Y-m-d H:i:s', string $timezone = 'UTC')
-    {
-        $this->format = $format;
-        $this->timezone = $timezone;
-    }
-
-    public function cast(string $property, $value)
+    public function cast(string $property, mixed $value): DateTimeInterface
     {
         if ($value instanceof DateTimeInterface) {
             return $value;
@@ -44,13 +45,13 @@ final class DateTimeCast implements CastableContract, UnCastableContract
         }
 
         if (is_int($value)) {
-            return DateTimeImmutable::createFromFormat('U', $value, new DateTimeZone($this->timezone));
+            return DateTimeImmutable::createFromFormat('U', (string) $value, new DateTimeZone($this->timezone));
         }
 
         throw new CastException($property);
     }
 
-    public function uncast(string $property, $value)
+    public function uncast(string $property, mixed $value): string
     {
         return $value->format($this->format);
     }

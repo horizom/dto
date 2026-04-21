@@ -11,11 +11,27 @@ use UnitEnum;
 
 trait DTOTransformerTrait
 {
+    /**
+     * Converts the DTO to its JSON string representation.
+     *
+     * Allows DTOs to be cast directly to string in string contexts.
+     *
+     * @return string
+     */
     public function __toString()
     {
         return $this->toJson();
     }
 
+    /**
+     * Converts the DTO to a plain associative array.
+     *
+     * Cast values are reversed (uncasted) to their serializable scalar
+     * equivalents: enums become their backing value, DateTimeInterface objects
+     * are formatted as strings, nested DTOs are recursively converted, etc.
+     *
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         $data = $this->buildDataForExport();
@@ -28,12 +44,19 @@ trait DTOTransformerTrait
         return $result;
     }
 
+    /**
+     * Converts the DTO to a JSON string.
+     *
+     * Internally calls `toArray()` then encodes the result with `json_encode()`.
+     *
+     * @return string
+     */
     public function toJson(): string
     {
         return json_encode($this->toArray());
     }
 
-    protected function uncast(string $property, $value)
+    protected function uncast(string $property, mixed $value): mixed
     {
         if ($this->{$property} === null) {
             return $value;
@@ -69,7 +92,7 @@ trait DTOTransformerTrait
         return $result;
     }
 
-    private function buildDataForExport()
+    private function buildDataForExport(): array
     {
         $data = [];
         $acceptedKeys = $this->getAcceptedProperties();

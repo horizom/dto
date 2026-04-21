@@ -7,9 +7,22 @@ namespace Horizom\DTO\Casting;
 use Horizom\DTO\Contracts\CastableContract;
 use Horizom\DTO\Exceptions\CastException;
 
+/**
+ * Casts a value to a PHP `float`.
+ *
+ * Accepts any numeric string or numeric value.
+ * Throws `CastException` for non-numeric input.
+ *
+ * Built-in alias: `'double'`
+ */
 final class FloatCast implements CastableContract
 {
-    public function cast(string $property, $value)
+    /**
+     * {@inheritdoc}
+     *
+     * @throws CastException If the value is not numeric
+     */
+    public function cast(string $property, mixed $value): float
     {
         if (!is_numeric($value)) {
             throw new CastException($property);
