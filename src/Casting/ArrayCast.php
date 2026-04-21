@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Horizom\DTO\Casting;
 
 use Horizom\DTO\Contracts\CastableContract;
@@ -35,7 +37,7 @@ final class ArrayCast implements CastableContract, UnCastableContract
 
     public function uncast(string $property, $value)
     {
-        if (is_array($value)) {
+        if (is_array($value) && $this->type instanceof \Horizom\DTO\Contracts\UnCastableContract) {
             return array_map(function ($item) use ($property) {
                 return $this->type->uncast($property, $item);
             }, $value);

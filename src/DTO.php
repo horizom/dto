@@ -1,20 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Horizom\DTO;
 
 use Horizom\DTO\Casting\ArrayCast;
 use Horizom\DTO\Casting\BooleanCast;
-use Horizom\DTO\Casting\Cast;
 use Horizom\DTO\Casting\DateTimeCast;
+use Horizom\DTO\Casting\EnumCast;
 use Horizom\DTO\Casting\FloatCast;
 use Horizom\DTO\Casting\IntegerCast;
 use Horizom\DTO\Casting\ObjectCast;
 use Horizom\DTO\Casting\StringCast;
+use Horizom\DTO\Contracts\CastableContract;
+use Horizom\DTO\Exceptions\CastTypeException;
 
 abstract class DTO
 {
-    use DTOResolver;
-    use DTOTransformer;
+    use DTOResolverTrait;
+    use DTOTransformerTrait;
 
     /**
      * @var array<string, mixed>
@@ -28,12 +32,12 @@ abstract class DTO
 
     public function __get(string $name)
     {
-        return $this->{$name} ?? null;
+        return null;
     }
 
     public function __set(string $name, $value)
     {
-        $this->$name = $value;
+        $this->{$name} = $value;
     }
 
     public function __isset(string $name)
@@ -47,42 +51,18 @@ abstract class DTO
     }
 
     /**
-     * Create a new instance of the DTO
-     *
-     * @param array<string, mixed> $data
-     * @return static
-     */
-    public static function create(array $data = [])
-    {
-        return new static($data);
-    }
-
-    /**
-     * Create a new instance of the DTO
-     *
-     * @param array<string, mixed> $data
-     * @return static
-     */
-    public static function make(array $data = [])
-    {
-        return new static($data);
-    }
-
-    /**
      * Returns the original data
-     *
-     * @return array<string, mixed>
      */
-    public function getOriginal()
+    public function getOriginal(): array
     {
         return $this->original;
     }
 
-    /**
-     * Check if the DTO is filled
-     *
-     * @return bool
-     */
+    public static function create(array $data = []): static
+    {
+        return new static($data);
+    }
+
     public function filled(): bool
     {
         $data = array_filter($this->toArray(), function ($i) {
@@ -92,7 +72,7 @@ abstract class DTO
         return !empty($data);
     }
 
-    public function fill(array $data)
+    public function fill(array $data): void
     {
         $this->original = $data;
 
@@ -102,6 +82,7 @@ abstract class DTO
 
     private function fillStack(array $data, bool $isDefault = false)
     {
+        $casts = $this->casts();
         $acceptedKeys = $this->getAcceptedProperties();
 
         foreach ($acceptedKeys as $key) {
@@ -109,7 +90,13 @@ abstract class DTO
                 continue;
             }
 
-            $this->{$key} = $this->cast($key, $data[$key]);
+            $value = $data[$key];
+
+            if (isset($casts[$key])) {
+                $value = $this->castValue($key, $value);
+            }
+
+            $this->{$key} = $value;
         }
     }
 
@@ -118,7 +105,7 @@ abstract class DTO
      *
      * @return array<string, mixed>
      */
-    protected function defaults()
+    protected function defaults(): array
     {
         return [];
     }
@@ -128,18 +115,48 @@ abstract class DTO
      *
      * @return array<string, mixed>
      */
-    protected function casts()
+    abstract protected function casts(): array;
+
+    private function castValue(string $key, $value)
     {
-        return [];
+        $casts = $this->casts();
+        $type = $casts[$key];
+        $castables = $this->castables();
+        $types = array_keys($castables);
+
+        if ($type instanceof CastableContract) {
+            $value = $type->cast($key, $value);
+        } elseif (is_callable($type)) {
+            $value = $type($value);
+        } elseif (is_string($type)) {
+            if (in_array($type, $types)) {
+                $castable = $castables[$type];
+                $value = (new $castable())->cast($key, $value);
+            } elseif (function_exists('enum_exists') && enum_exists($type)) {
+                $value = (new EnumCast($type))->cast($key, $value);
+            } elseif (class_exists($type)) {
+                if (property_exists($type, 'create')) {
+                    $value = $value ? $type::create($value) : null;
+                } elseif (property_exists($type, 'make')) {
+                    $value = $value ? $type::make($value) : null;
+                } else {
+                    $value = new $type($value);
+                }
+            }
+        } else {
+            throw new CastTypeException($key, $type);
+        }
+
+        return $value;
     }
 
-    protected function getAcceptedProperties(): array
+    private function getAcceptedProperties(): array
     {
         $acceptedKeys = [];
         $vars = get_object_vars($this);
 
         foreach ($vars as $key => $value) {
-            if (!$this->isforbiddenProperty($key)) {
+            if (!$this->isForbiddenProperty($key)) {
                 $acceptedKeys[] = $key;
             }
         }
@@ -147,7 +164,7 @@ abstract class DTO
         return $acceptedKeys;
     }
 
-    protected function isforbiddenProperty(string $property): bool
+    private function isForbiddenProperty(string $property): bool
     {
         return in_array($property, [
             'data',
@@ -157,9 +174,9 @@ abstract class DTO
         ]);
     }
 
-    protected function castableTypes(string $type = null): array
+    private function castables(): array
     {
-        $items = [
+        return [
             'string' => StringCast::class,
             'integer' => IntegerCast::class,
             'boolean' => BooleanCast::class,
@@ -168,44 +185,5 @@ abstract class DTO
             'array' => ArrayCast::class,
             'datetime' => DateTimeCast::class,
         ];
-
-        return $type ? $items[$type] : $items;
-    }
-
-    /**
-     * Returns the cast instance for a property
-     *
-     * @param string $property
-     * @return Cast|Closure|string|null
-     */
-    protected function getCastInstance(string $property)
-    {
-        $type = $this->getCastMethod($property);
-
-        if (is_null($type)) {
-            $casts = $this->casts();
-            $type = $casts[$property] ?? null;
-        } elseif (!$type instanceof Cast) {
-            throw new \Exception("Invalid castable instance for property '{$property}'");
-        }
-
-        return $type;
-    }
-
-    /**
-     * Returns the cast method for a property if it exists
-     *
-     * @param string $property
-     * @return Cast|null
-     */
-    protected function getCastMethod(string $property)
-    {
-        $method = 'cast' . $this->snakeToCamel(ucfirst($property));
-        return method_exists($this, $method) ? $this->{$method}() : null;
-    }
-
-    protected function snakeToCamel(string $value): string
-    {
-        return str_replace(' ', '', ucwords(str_replace('_', ' ', $value)));
     }
 }

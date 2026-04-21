@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Horizom\DTO\Casting;
 
 use DateTimeImmutable;
@@ -50,6 +52,6 @@ final class DateTimeCast implements CastableContract, UnCastableContract
 
     public function uncast(string $property, $value)
     {
-        return $value->format('Y-m-d H:i:s');
+        return $value->format($this->format);
     }
 }

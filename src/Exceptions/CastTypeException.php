@@ -6,8 +6,9 @@ namespace Horizom\DTO\Exceptions;
 
 class CastTypeException extends \Exception
 {
-    public function __construct(string $type, string $value)
+    public function __construct(string $property, $type)
     {
-        parent::__construct("Cannot cast value '{$value}' to type '{$type}'");
+        $typeName = is_object($type) ? get_class($type) : gettype($type);
+        parent::__construct("Cannot cast property '{$property}' — unsupported cast type '{$typeName}'");
     }
 }

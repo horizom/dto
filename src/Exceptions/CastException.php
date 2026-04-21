@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Horizom\DTO\Exceptions;
 
 class CastException extends \Exception
